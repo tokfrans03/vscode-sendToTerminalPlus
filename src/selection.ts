@@ -29,7 +29,8 @@ export class UserSelection {
 
 
 export function getSelectionText(textEditor: vscode.TextEditor) : UserSelection {
-    const selection = textEditor.selection;       
+    const selection = textEditor.selection;
+    const selections = textEditor.selections;
 
     // weird state
     if (!selection) {
@@ -46,21 +47,27 @@ export function getSelectionText(textEditor: vscode.TextEditor) : UserSelection 
     }
 
     // is multiline
-    const isMultiLine = selection.end.line !== selection.start.line;
+    const isMultiLine = selection.end.line !== selection.start.line || selections.length > 1;
 
-    // multiline selection
+
     let multilineSelection : string[] = [];
-    for (let line = selection.start.line; line <= selection.end.line; line++){
-        let currentLine = textEditor.document.lineAt(line).text;
-        if (line === selection.end.line) {
-            currentLine = currentLine.substring(0, selection.end.character);
+    
+    // multi cursor selection
+    for (let i = 0; i < selections.length; i++) {
+        const cursor_selection = selections[i];
+        
+        // multiline selection
+        for (let line = cursor_selection.start.line; line <= cursor_selection.end.line; line++){
+            let currentLine = textEditor.document.lineAt(line).text;
+            if (line === cursor_selection.end.line) {
+                currentLine = currentLine.substring(0, cursor_selection.end.character);
+            }
+            if (line === cursor_selection.start.line) {
+                currentLine = currentLine.substring(cursor_selection.start.character);
+            }
+            multilineSelection.push(currentLine);
         }
-        if (line === selection.start.line) {
-            currentLine = currentLine.substring(selection.start.character);
-        }
-        multilineSelection.push(currentLine);
     }
-
     // single line
     const lineSelection = textEditor.document.getText(selection);
 
